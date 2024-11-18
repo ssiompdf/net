@@ -1,0 +1,843 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<title>SSiom PDF - Sistema de Firma de Documentos</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+        display: flex;
+        min-height: 100vh;
+        background-color: #f5f6fa;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: #2c3e50;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 30px;
+    }
+
+    .sidebar-button {
+        padding: 15px;
+        border: none;
+        border-radius: 8px;
+        background-color: #34495e;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .sidebar-button:hover {
+        background-color: #3498db;
+        transform: translateX(5px);
+    }
+
+    .content-section {
+        display: none;
+        background-color: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-section.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+    .form-group input[readonly] {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+
+    .submit-btn {
+        background-color: #2ecc71;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .submit-btn:hover {
+        background-color: #27ae60;
+    }
+
+    .pdf-list {
+        display: grid;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .pdf-item {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .icon {
+        width: 24px;
+        height: 24px;
+        fill: currentColor;
+    }
+
+    .database-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .database-table th,
+    .database-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .database-table th {
+        background-color: #34495e;
+        color: white;
+    }
+
+    .database-table tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .database-entry {
+        margin-bottom: 15px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+    }
+
+    .database-entry h3 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .database-entry p {
+        margin: 5px 0;
+        color: #555;
+    }
+
+    .pdf-preview {
+        display: inline-block;
+        padding: 5px 10px;
+        background-color: #e74c3c;
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    /* Add to existing CSS */
+    .login-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .login-container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-container h2 {
+        margin-bottom: 10px;
+        text-align: center;
+        color: #2c3e50;
+        font-size: 28px;
+    }
+
+    .login-container h3 {
+        text-align: center;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .forgot-password {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .forgot-password a {
+        color: #3498db;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .forgot-password a:hover {
+        text-decoration: underline;
+    }
+
+    .language-selector {
+        padding: 5px 10px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        background-color: white;
+        cursor: pointer;
+    }
+
+    .language-selector:focus {
+        outline: none;
+        border-color: #3498db;
+    }
+
+    /* Add to existing CSS */
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-toggle:hover {
+        color: #333;
+    }
+
+    /* Adjust password input to accommodate the button */
+    #password {
+        padding-right: 40px;
+    }
+
+    /* Add to existing CSS */
+    .pdf-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 5px;
+    }
+
+    .action-btn {
+        padding: 3px 8px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .download-btn {
+        background-color: #3498db;
+    }
+
+    .send-btn {
+        background-color: #2ecc71;
+    }
+
+    .action-btn:hover {
+        opacity: 0.9;
+    }
+</style>
+</head>
+<body>
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-container">
+            <h2>SSiom PDF</h2>
+            <div style="text-align: right; margin-bottom: 15px;">
+                <select id="languageSelect" onchange="changeLanguage(this.value)" class="language-selector">
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <h3 style="text-align: center; color: #666; margin-bottom: 20px;">Sistema de Firma de Documentos</h3>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Email</label>
+                    <input type="email" id="username" value="ssiompdf@gmail.com" readonly required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <div style="position: relative;">
+                        <input type="password" id="password" required>
+                        <button type="button" id="togglePassword" class="password-toggle">
+                            <svg class="icon" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Iniciar Sesión</button>
+            </form>
+            <div class="forgot-password">
+                <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar hidden">
+        <button class="sidebar-button" onclick="showSection('user-data')">
+            <svg class="icon" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            Datos del Usuario
+        </button>
+        <button class="sidebar-button" onclick="showSection('attach-pdf')">
+            <svg class="icon" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Adjuntar PDF
+        </button>
+        <button class="sidebar-button" onclick="showSection('received-pdf')">
+            <svg class="icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 6h-3v3h-2V9H9V7h3V4h2v3h3v2z"/>
+            </svg>
+            PDF Recibidos
+        </button>
+        <button class="sidebar-button" onclick="showSection('database')">
+            <svg class="icon" viewBox="0 0 24 24">
+                <path d="M3 20h18v-4H3v4zm0-6h18v-4H3v4zm0-6h18V4H3v4z"/>
+            </svg>
+            Base de Datos
+        </button>
+    </div>
+
+    <div class="main-content hidden">
+        <div id="user-data" class="content-section">
+            <h2>Datos del Usuario</h2>
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="name">Nombre Completo</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input type="email" id="email" required>
+                </div>
+                <button type="submit" class="submit-btn">Guardar Datos</button>
+            </form>
+        </div>
+
+        <div id="attach-pdf" class="content-section">
+            <h2>Adjuntar PDF para Firma</h2>
+            <form id="pdf-form">
+                <div class="form-group">
+                    <label for="pdf-file">Seleccionar PDF</label>
+                    <input type="file" id="pdf-file" accept=".pdf" required>
+                </div>
+                <div class="form-group">
+                    <label for="recipient-email">Correo del Destinatario</label>
+                    <input type="email" id="recipient-email" required>
+                </div>
+                <button type="submit" class="submit-btn">Enviar para Firma</button>
+            </form>
+        </div>
+
+        <div id="received-pdf" class="content-section">
+            <h2>PDF Recibidos</h2>
+            <div class="pdf-list">
+                <!-- Los PDFs se cargarán dinámicamente aquí -->
+            </div>
+        </div>
+
+        <div id="database" class="content-section">
+            <h2>Base de Datos de Usuarios</h2>
+            <div id="database-content">
+                <!-- La base de datos se cargará dinámicamente aquí -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update mockPDFs to include verification status
+        const mockPDFs = [
+            { 
+                name: 'Contrato_001.pdf', 
+                date: '2024-01-15', 
+                status: 'Firmado',
+                source: 'ssiompdf@gmail.com',
+                signedBy: 'Juan Pérez',
+                verified: false
+            },
+            { 
+                name: 'Documento_002.pdf', 
+                date: '2024-01-16', 
+                status: 'Pendiente',
+                source: 'ssiompdf@gmail.com', 
+                signedBy: 'María García',
+                verified: false
+            }
+        ];
+
+        // Add to translations
+        const translations = {
+            en: {
+                // Update English translations
+                fullName: "Full Name",
+                email: "Email",
+                verified: "Verified",
+                notVerified: "Not Verified",
+                date: "Date",
+                status: "Status",
+                signed: "Signed",
+                pending: "Pending",
+                verifySignature: "Review Document", // Changed from "Verify Signature"
+                signedBy: "Signed by",
+                download: "Download",
+                send: "Send Document"
+            },
+            es: {
+                // Update Spanish translations
+                fullName: "Nombre Completo",
+                email: "Correo Electrónico",
+                verified: "Verificado",
+                notVerified: "No Verificado",
+                date: "Fecha",
+                status: "Estado",
+                signed: "Firmado",
+                pending: "Pendiente",
+                verifySignature: "Revisar Documento", // Changed from "Verificar Firma"
+                signedBy: "Firmado por",
+                download: "Descargar",
+                send: "Enviar Documento"
+            }
+        };
+
+        // Set default language to Spanish
+        let currentLanguage = 'es'; // Default language
+
+        // Add the language change function
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            // Update content that needs translation
+            loadReceivedPDFs();
+            loadDatabase();
+            
+            // Update login form labels
+            if (lang === 'en') {
+                document.querySelector('label[for="username"]').textContent = 'Email';
+                document.querySelector('label[for="password"]').textContent = 'Password';
+                document.querySelector('button[type="submit"]').textContent = 'Login';
+                document.querySelector('#forgotPasswordLink').textContent = 'Forgot password?';
+                document.querySelector('h3').textContent = 'Document Signing System';
+            } else {
+                document.querySelector('label[for="username"]').textContent = 'Email';
+                document.querySelector('label[for="password"]').textContent = 'Contraseña';
+                document.querySelector('button[type="submit"]').textContent = 'Iniciar Sesión';
+                document.querySelector('#forgotPasswordLink').textContent = '¿Olvidaste tu contraseña?';
+                document.querySelector('h3').textContent = 'Sistema de Firma de Documentos';
+            }
+        }
+
+        // Add new function to open document for review
+        function openDocument(docName) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                max-width: 800px;
+                width: 90%;
+                height: 80vh;
+                display: flex;
+                flex-direction: column;
+            `;
+            
+            const reviewTitle = currentLanguage === 'es' ? 'Revisión de Documento' : 'Document Review';
+            
+            content.innerHTML = `
+                <h3 style="margin-bottom: 20px; text-align: center;">${reviewTitle}: ${docName}</h3>
+                <div style="flex: 1; background: #f5f5f5; margin-bottom: 20px; padding: 20px; overflow-y: auto;">
+                    <!-- PDF viewer would be embedded here in a real application -->
+                    <p style="text-align: center;">Contenido del documento ${docName}</p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="approveDocument('${docName}')" 
+                            style="padding: 10px 20px; border: none; border-radius: 4px; background: #27ae60; color: white; cursor: pointer;">
+                        ${currentLanguage === 'es' ? 'Aprobar' : 'Approve'}
+                    </button>
+                    <button onclick="resendDocument('${docName}')"
+                            style="padding: 10px 20px; border: none; border-radius: 4px; background: #e74c3c; color: white; cursor: pointer;">
+                        ${currentLanguage === 'es' ? 'Reenviar' : 'Resend'}
+                    </button>
+                    <button onclick="this.closest('.login-overlay').remove()"
+                            style="padding: 10px 20px; border: none; border-radius: 4px; background: #34495e; color: white; cursor: pointer;">
+                        ${currentLanguage === 'es' ? 'Cerrar' : 'Close'}
+                    </button>
+                </div>
+            `;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        // Add new function to handle document approval
+        function approveDocument(docName) {
+            if (confirm(currentLanguage === 'es' ? 
+                '¿Está seguro que desea aprobar este documento?' : 
+                'Are you sure you want to approve this document?')) {
+                // Close the review modal
+                document.querySelector('.login-overlay')?.remove();
+                // Proceed with verification
+                verifyDocument(docName);
+            }
+        }
+
+        // Add new function to handle document resend
+        function resendDocument(docName) {
+            if (confirm(currentLanguage === 'es' ? 
+                '¿Está seguro que desea reenviar este documento al cliente?' : 
+                'Are you sure you want to resend this document to the client?')) {
+                // Find the document in mockPDFs
+                const pdf = mockPDFs.find(p => p.name === docName);
+                if (pdf) {
+                    // Reset status to pending
+                    pdf.status = currentLanguage === 'es' ? 'Pendiente' : 'Pending';
+                    pdf.verified = false;
+                    // In a real application, this would trigger an email to the client
+                    alert(currentLanguage === 'es' ? 
+                        'Documento reenviado al cliente para correcciones.' : 
+                        'Document resent to client for corrections.');
+                    // Close the review modal
+                    document.querySelector('.login-overlay')?.remove();
+                    // Refresh the PDF list
+                    loadReceivedPDFs();
+                }
+            }
+        }
+
+        // Update the verifyDocument function to remove the PDF from mockPDFs after verification
+        function verifyDocument(pdfName) {
+            // Find the PDF in mockPDFs
+            const pdfIndex = mockPDFs.findIndex(p => p.name === pdfName);
+            if (pdfIndex !== -1) {
+                const pdf = mockPDFs[pdfIndex];
+                
+                // Update verification status
+                pdf.verified = true;
+                
+                // Find user in database
+                const user = userDatabase.find(u => u.email === pdf.source);
+                if (user) {
+                    // Add to verified documents if not already present
+                    if (!user.verified) {
+                        user.verified = [];
+                    }
+                    
+                    // Add verification entry
+                    user.verified.push({
+                        name: pdf.name,
+                        date: pdf.date,
+                        status: 'Verificado'
+                    });
+                    
+                    // Remove PDF from mockPDFs array
+                    mockPDFs.splice(pdfIndex, 1);
+                    
+                    // Refresh UI
+                    loadDatabase();
+                    loadReceivedPDFs();
+                    
+                    alert('Documento verificado y añadido a la base de datos.');
+                }
+            }
+        }
+
+        // Update the loadReceivedPDFs function
+        function loadReceivedPDFs() {
+            const pdfList = document.querySelector('.pdf-list');
+            pdfList.innerHTML = mockPDFs.map(pdf => `
+                <div class="pdf-item">
+                    <div>
+                        <strong>${pdf.name}</strong>
+                        <p>${translations[currentLanguage].date}: ${pdf.date}</p>
+                        <p>${translations[currentLanguage].status}: ${
+                            pdf.status === 'Firmado' ? translations[currentLanguage].signed : translations[currentLanguage].pending
+                        }</p>
+                        <p>Email: ${pdf.source}</p>
+                        <p>${translations[currentLanguage].signedBy}: ${pdf.signedBy}</p>
+                    </div>
+                    <div style="display: flex; flex-direction: row; gap: 10px; align-items: center;">
+                        ${pdf.status === 'Firmado' ? `
+                            <button class="submit-btn" style="background-color: #27ae60;" 
+                                    onclick="openDocument('${pdf.name}')">
+                                ${translations[currentLanguage].verifySignature}
+                            </button>
+                            <div style="padding: 5px 10px; border-radius: 4px; background-color: ${pdf.verified ? '#27ae60' : '#e74c3c'}; color: white; cursor: pointer;"
+                                 onclick="verifyDocument('${pdf.name}')">
+                                ${pdf.verified ? translations[currentLanguage].verified : translations[currentLanguage].notVerified}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update loadDatabase function to show verified documents
+        function loadDatabase() {
+            const databaseContent = document.getElementById('database-content');
+            databaseContent.innerHTML = `
+                <table class="database-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>${translations[currentLanguage].fullName}</th>
+                            <th>${translations[currentLanguage].email}</th>
+                            <th>${translations[currentLanguage].verified}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${userDatabase.map(user => `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.name}</td>
+                                <td>${user.email}</td>
+                                <td>
+                                    ${user.verified ? user.verified.map(doc => `
+                                        <div class="pdf-preview">
+                                            ${doc.name} - ${doc.status}
+                                            <div class="pdf-actions">
+                                                <button onclick="downloadVerifiedDocument('${doc.name}')" class="action-btn download-btn">
+                                                    <svg class="icon" viewBox="0 0 24 24" style="width: 12px; height: 12px;">
+                                                        <path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                                                    </svg>
+                                                    ${translations[currentLanguage].download}
+                                                </button>
+                                                <button onclick="sendVerifiedDocument('${doc.name}')" class="action-btn send-btn">
+                                                    <svg class="icon" viewBox="0 0 24 24" style="width: 12px; height: 12px;">
+                                                        <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                                    </svg>
+                                                    ${translations[currentLanguage].send}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `).join('') : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Add these helper functions
+        function downloadVerifiedDocument(docName) {
+            // In a real application, this would trigger the actual document download
+            alert(`Descargando documento: ${docName}`);
+        }
+
+        function sendVerifiedDocument(docName) {
+            showSocialShareModal(docName);
+        }
+
+        // Hide main content initially
+        document.querySelector('.sidebar').classList.add('hidden');
+        document.querySelector('.main-content').classList.add('hidden');
+
+        // Mock admin credentials
+        const ADMIN_CREDENTIALS = {
+            username: 'ssiompdf@gmail.com',
+            password: 'Eli14omar14@1412682107@@'
+        };
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === ADMIN_CREDENTIALS.username && 
+                password === ADMIN_CREDENTIALS.password) {
+                // Hide login overlay
+                document.getElementById('loginOverlay').classList.add('hidden');
+                
+                // Show main content
+                document.querySelector('.sidebar').classList.remove('hidden');
+                document.querySelector('.main-content').classList.remove('hidden');
+                
+                // Show initial section
+                showSection('user-data');
+            } else {
+                alert('Usuario o contraseña incorrectos');
+            }
+        });
+
+        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // In a real application, this would make an API call to trigger password reset
+            const recoveryEmail = 'ssiompdf@gmail.com';
+            
+            alert(`Se ha enviado un enlace de recuperación a ${recoveryEmail}. Por favor, revise su correo electrónico para restablecer su contraseña.`);
+        });
+
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('path');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                // Change to "hide" icon
+                icon.setAttribute('d', 'M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z');
+            } else {
+                passwordInput.type = 'password';
+                // Change back to "show" icon
+                icon.setAttribute('d', 'M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z');
+            }
+        });
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        showSection('user-data');
+
+        document.getElementById('user-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userData = {
+                id: userDatabase.length + 1,
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                documents: []
+            };
+            userDatabase.push(userData);
+            loadDatabase();
+            alert('Datos guardados correctamente');
+        });
+
+        document.getElementById('pdf-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('pdf', document.getElementById('pdf-file').files[0]);
+            formData.append('recipientEmail', document.getElementById('recipient-email').value);
+            const recipientEmail = document.getElementById('recipient-email').value;
+            const pdfFile = document.getElementById('pdf-file').files[0];
+            
+            const user = userDatabase.find(u => u.email === recipientEmail);
+            if (user) {
+                user.documents.push({
+                    name: pdfFile.name,
+                    date: new Date().toISOString().split('T')[0],
+                    status: 'Pendiente'
+                });
+                loadDatabase();
+            }
+            
+            alert('PDF enviado correctamente para firma');
+        });
+
+        const userDatabase = [
+            {
+                id: 1,
+                name: 'Juan Pérez',
+                email: 'juan@example.com',
+                documents: [
+                    {
+                        name: 'Contrato_001.pdf',
+                        date: '2024-01-15',
+                        status: 'Firmado'
+                    }
+                ]
+            },
+            {
+                id: 2,
+                name: 'María García',
+                email: 'maria@example.com',
+                documents: [
+                    {
+                        name: 'Documento_002.pdf',
+                        date: '2024-01-16',
+                        status: 'Pendiente'
+                    }
+                ]
+            }
+        ];
+
+        loadReceivedPDFs();
+        loadDatabase();
+        changeLanguage('es'); // Set initial language to Spanish
+    </script>
+</body>
+</html>
